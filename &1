@@ -1,0 +1,10 @@
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// <define:import.meta.env>
+var define_import_meta_env_default = {};
+
+// esm:https://esm.sh/*scheduler@0.27.0?target=esnext&lp=node_modules%252Fscheduler
