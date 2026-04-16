@@ -10,6 +10,7 @@ import './index.css';
 // Fonts
 import '@fontsource-variable/inter';
 import '@fontsource-variable/outfit';
+// App version: 1.0.0
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
