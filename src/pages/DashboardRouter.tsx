@@ -23,9 +23,12 @@ export function DashboardRouter() {
     );
   }
 
-  // Athlete who hasn't finished onboarding → redirect
+  // Role-based onboarding gates — redirect before dashboard renders
   if (profile?.role === 'athlete' && !profile.onboarding_complete) {
     return <Navigate to="/onboarding" replace />;
+  }
+  if (profile?.role === 'coach' && !profile.onboarding_complete) {
+    return <Navigate to="/coach-onboarding" replace />;
   }
 
   const renderDashboard = () => {
