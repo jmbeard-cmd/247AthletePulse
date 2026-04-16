@@ -21,10 +21,8 @@ const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {},
 });
 
-// How long to wait between retry attempts (ms)
-const RETRY_DELAY_MS = 500;
-// Maximum number of fetch attempts before giving up
-const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 600;
+const MAX_RETRIES = 4;
 
 function sleep(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
@@ -34,24 +32,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  // Start true so nothing renders until we know the auth state
   const [loading, setLoading] = useState(true);
 
-  // Keep a ref to the current user id so the retry loop can bail out
-  // if the user signs out mid-retry.
+  // Tracks which user id the current fetch is for — lets us discard
+  // results from stale fetches if the user changes mid-flight.
   const currentUserIdRef = useRef<string | null>(null);
 
   /**
-   * Fetch the profile row for `userId`, retrying up to MAX_RETRIES times
-   * with a RETRY_DELAY_MS pause between attempts.
-   *
-   * This handles the race condition where auth.signUp() fires
-   * onAuthStateChange(SIGNED_IN) before the app's own INSERT INTO profiles
-   * has been committed and is readable via RLS.
+   * Fetch the profile for `userId`.
+   * Retries up to MAX_RETRIES times with RETRY_DELAY_MS between attempts.
+   * Caller is responsible for setting loading=true before calling and
+   * loading=false after it resolves.
    */
-  const fetchProfile = async (userId: string): Promise<void> => {
+  const fetchProfileInner = async (userId: string): Promise<void> => {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      // Bail out if the user changed or signed out while we were waiting
-      if (currentUserIdRef.current !== userId) return;
+      if (currentUserIdRef.current !== userId) return; // user changed, abort
 
       const { data, error } = await supabase
         .from('profiles')
@@ -60,30 +56,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (data) {
-        setProfile(data);
+        if (currentUserIdRef.current === userId) {
+          setProfile(data);
+        }
         return;
       }
 
-      // Log the failure reason for debugging
-      const reason = error?.message ?? 'no row returned';
-      console.warn(`[AuthContext] fetchProfile attempt ${attempt}/${MAX_RETRIES} failed for ${userId}: ${reason}`);
+      console.warn(
+        `[Auth] fetchProfile attempt ${attempt}/${MAX_RETRIES} for ${userId}:`,
+        error?.message ?? 'no row'
+      );
 
-      // Don't sleep after the last attempt
       if (attempt < MAX_RETRIES) {
         await sleep(RETRY_DELAY_MS);
       }
     }
 
-    // All retries exhausted — leave profile as null so DashboardRouter
-    // can show a recovery UI instead of silently getting stuck.
-    console.error(`[AuthContext] fetchProfile gave up after ${MAX_RETRIES} attempts for ${userId}`);
+    console.error(`[Auth] fetchProfile gave up after ${MAX_RETRIES} attempts for ${userId}`);
   };
 
-  const refreshProfile = async () => {
-    if (user) {
-      currentUserIdRef.current = user.id;
-      await fetchProfile(user.id);
-    }
+  /**
+   * Public method — used by DashboardRouter's "Try Refreshing" button.
+   * Re-runs the fetch and keeps loading=true while it runs so the UI
+   * re-evaluates once the result is available.
+   */
+  const refreshProfile = async (): Promise<void> => {
+    if (!user) return;
+    currentUserIdRef.current = user.id;
+    setLoading(true);
+    await fetchProfileInner(user.id);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -92,39 +94,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true;
+
+    // ── Step 1: check for an existing session on page load ──────────────────
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!isMounted) return;
+
       setSession(session);
       setUser(session?.user ?? null);
-      currentUserIdRef.current = session?.user?.id ?? null;
 
       if (session?.user) {
-        fetchProfile(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
+        currentUserIdRef.current = session.user.id;
+        // Keep loading=true the whole time the profile fetch runs
+        await fetchProfileInner(session.user.id);
       }
+
+      if (isMounted) setLoading(false);
     });
 
-    // Subscribe to subsequent auth changes (login, logout, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      currentUserIdRef.current = session?.user?.id ?? null;
+    // ── Step 2: react to login / logout events ──────────────────────────────
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!isMounted) return;
 
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setProfile(null);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          // Set loading=true so consumers wait while we fetch the profile.
+          // This is the critical fix: without this, the dashboard renders
+          // with profile=null immediately after signInWithPassword resolves.
+          setLoading(true);
+          currentUserIdRef.current = session.user.id;
+          await fetchProfileInner(session.user.id);
+          if (isMounted) setLoading(false);
+        } else {
+          // Signed out
+          currentUserIdRef.current = null;
+          setProfile(null);
+          setLoading(false);
+        }
       }
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
     currentUserIdRef.current = null;
-    await supabase.auth.signOut();
     setProfile(null);
+    await supabase.auth.signOut();
   };
 
   return (
