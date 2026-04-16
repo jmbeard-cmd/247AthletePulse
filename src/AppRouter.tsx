@@ -13,6 +13,7 @@ import { TeamPage } from "./pages/TeamPage";
 import { TeamReportsPage } from "./pages/TeamReportsPage";
 import { InviteCodesPage } from "./pages/InviteCodesPage";
 import { ParentDashboard } from "./pages/ParentDashboard";
+import { AdminPage } from "./pages/AdminPage";
 import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { AdminResponsesPage } from "./pages/AdminResponsesPage";
 import { ProfilePage } from "./pages/ProfilePage";
@@ -87,6 +88,12 @@ export function AppRouter() {
         <Route path="/athletes" element={
           <ProtectedRoute allowedRoles={['parent']}>
             <AppLayout><ParentDashboard /></AppLayout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AppLayout><AdminPage /></AppLayout>
           </ProtectedRoute>
         } />
 

@@ -2,9 +2,9 @@ import { ReactNode, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Activity, Home, ClipboardList, Users, BarChart2, 
-  Settings, LogOut, Menu, X, ChevronRight, Bell,
-  UserCircle, Shield, BookOpen, Star
+  Activity, Home, ClipboardList, Users, BarChart2,
+  LogOut, Menu, ChevronRight, Bell,
+  UserCircle, Shield, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,8 +24,7 @@ const navItems: NavItem[] = [
   { label: 'Team Reports', href: '/reports', icon: <BarChart2 className="w-5 h-5" />, roles: ['coach'] },
   { label: 'Invite Codes', href: '/invites', icon: <Star className="w-5 h-5" />, roles: ['coach', 'admin'] },
   { label: 'My Athletes', href: '/athletes', icon: <Users className="w-5 h-5" />, roles: ['parent'] },
-  { label: 'Users', href: '/admin/users', icon: <Shield className="w-5 h-5" />, roles: ['admin'] },
-  { label: 'All Responses', href: '/admin/responses', icon: <BookOpen className="w-5 h-5" />, roles: ['admin'] },
+  { label: 'Admin Panel', href: '/admin', icon: <Shield className="w-5 h-5" />, roles: ['admin'] },
   { label: 'Profile', href: '/profile', icon: <UserCircle className="w-5 h-5" />, roles: ['athlete', 'coach', 'parent', 'admin'] },
 ];
 

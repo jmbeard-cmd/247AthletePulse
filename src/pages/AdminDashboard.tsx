@@ -134,7 +134,14 @@ export function AdminDashboard() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Link to="/admin/users" className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all">
+        <Link to="/admin#invites" className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all">
+          <Star className="w-8 h-8 text-amber-500 mb-3" />
+          <h3 className="font-outfit font-bold text-gray-900 mb-1">Invite Codes</h3>
+          <p className="font-inter text-xs text-gray-400 mb-3">Generate and manage access codes</p>
+          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-700 transition-colors" />
+        </Link>
+
+        <Link to="/admin#users" className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all">
           <Users className="w-8 h-8 text-blue-700 mb-3" />
           <h3 className="font-outfit font-bold text-gray-900 mb-1">Manage Users</h3>
           <p className="font-inter text-xs text-gray-400 mb-3">View and manage all platform users</p>
@@ -145,13 +152,6 @@ export function AdminDashboard() {
           <BarChart3 className="w-8 h-8 text-green-600 mb-3" />
           <h3 className="font-outfit font-bold text-gray-900 mb-1">All Responses</h3>
           <p className="font-inter text-xs text-gray-400 mb-3">Browse check-in data across all athletes</p>
-          <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-700 transition-colors" />
-        </Link>
-
-        <Link to="/invites" className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-6 hover:border-blue-200 hover:shadow-md transition-all">
-          <Star className="w-8 h-8 text-amber-500 mb-3" />
-          <h3 className="font-outfit font-bold text-gray-900 mb-1">Invite Codes</h3>
-          <p className="font-inter text-xs text-gray-400 mb-3">Generate and manage invite codes</p>
           <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-700 transition-colors" />
         </Link>
       </div>
