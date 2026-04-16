@@ -1,4 +1,4 @@
-import Buffer from 'buffer';
+import { Buffer } from 'buffer';
 
 /**
  * Polyfill for Buffer in browser environment
@@ -7,7 +7,7 @@ import Buffer from 'buffer';
  * This polyfill makes the buffer package's Buffer available globally.
  */
 if (!globalThis.Buffer) {
-  globalThis.Buffer = Buffer.Buffer;
+  globalThis.Buffer = Buffer;
 }
 
 /**
