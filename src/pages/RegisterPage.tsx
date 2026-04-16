@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ interface RoleOption {
   icon: ReactNode;
 }
 
-const ROLES: RoleOption[] = [
+const BASE_ROLES: RoleOption[] = [
   {
     value: 'athlete',
     label: 'Athlete',
@@ -44,7 +44,7 @@ const ROLES: RoleOption[] = [
   {
     value: 'parent',
     label: 'Parent',
-    description: "Support my athlete",
+    description: 'Support my athlete',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -54,6 +54,17 @@ const ROLES: RoleOption[] = [
     ),
   },
 ];
+
+const ADMIN_ROLE: RoleOption = {
+  value: 'admin',
+  label: 'Admin',
+  description: 'Manage the platform',
+  icon: (
+    <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -101,6 +112,22 @@ export function RegisterPage() {
   // UI state
   const [loading, setLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
+
+  // Admin count — determines whether the Admin role card is shown
+  const [adminCount, setAdminCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('role', 'admin')
+      .then(({ count }) => setAdminCount(count ?? 0));
+  }, []);
+
+  // Build the visible roles list: show Admin card only when no admins exist yet
+  const visibleRoles = adminCount === 0
+    ? [...BASE_ROLES, ADMIN_ROLE]
+    : BASE_ROLES;
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
@@ -217,7 +244,7 @@ export function RegisterPage() {
     navigate('/dashboard');
   };
 
-  const selectedRole = role ? ROLES.find(r => r.value === role) : null;
+  const selectedRole = role ? visibleRoles.find(r => r.value === role) : null;
   const colors = role ? ROLE_COLORS[role] : null;
 
   return (
@@ -310,8 +337,11 @@ export function RegisterPage() {
             {/* ── Role selector ── */}
             <div className="space-y-2">
               <Label className="font-inter text-sm font-medium text-gray-300">I am a…</Label>
-              <div className="grid grid-cols-3 gap-2.5">
-                {ROLES.map(r => {
+              <div className={cn(
+                'grid gap-2.5',
+                visibleRoles.length === 4 ? 'grid-cols-2' : 'grid-cols-3'
+              )}>
+                {visibleRoles.map(r => {
                   const c = ROLE_COLORS[r.value];
                   const selected = role === r.value;
                   return (
@@ -339,7 +369,8 @@ export function RegisterPage() {
                       </span>
                       <span
                         className={cn(
-                          'font-inter text-[10px] leading-tight text-center transition-colors hidden sm:block',
+                          'font-inter text-[10px] leading-tight text-center transition-colors',
+                          visibleRoles.length === 4 ? 'block' : 'hidden sm:block',
                           selected ? 'text-gray-300' : 'text-gray-600'
                         )}
                       >
