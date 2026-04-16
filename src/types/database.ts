@@ -17,18 +17,21 @@ export interface Database {
           full_name: string | null;
           role: UserRole;
           created_at: string;
+          onboarding_complete: boolean;
         };
         Insert: {
           id: string;
           full_name?: string | null;
           role: UserRole;
           created_at?: string;
+          onboarding_complete?: boolean;
         };
         Update: {
           id?: string;
           full_name?: string | null;
           role?: UserRole;
           created_at?: string;
+          onboarding_complete?: boolean;
         };
       };
       sports_list: {

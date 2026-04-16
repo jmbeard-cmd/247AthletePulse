@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { AthleteOnboarding } from "./pages/AthleteOnboarding";
 import { DashboardRouter } from "./pages/DashboardRouter";
 import { CheckInPage } from "./pages/CheckInPage";
 import { ProgressPage } from "./pages/ProgressPage";
@@ -37,6 +38,12 @@ export function AppRouter() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardRouter />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/onboarding" element={
+          <ProtectedRoute allowedRoles={['athlete']}>
+            <AthleteOnboarding />
           </ProtectedRoute>
         } />
 

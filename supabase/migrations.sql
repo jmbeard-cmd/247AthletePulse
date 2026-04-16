@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   full_name TEXT,
   role TEXT NOT NULL CHECK (role IN ('athlete', 'parent', 'coach', 'admin')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  onboarding_complete BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- sports_list
